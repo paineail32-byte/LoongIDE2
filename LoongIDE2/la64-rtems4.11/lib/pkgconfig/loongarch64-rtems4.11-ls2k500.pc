@@ -1,0 +1,18 @@
+#
+# pkg-config support file for RTEMS BSP ls2k500
+#
+# Warning: This stuff is experimental and may be changed at any time.
+#
+prefix=/opt/la64-rtems4.11-rc1.6
+exec_prefix=/opt/la64-rtems4.11-rc1.6/loongarch64-rtems4.11
+libdir=${exec_prefix}/ls2k500/lib
+includedir=${exec_prefix}/ls2k500/lib/include
+
+CFLAGS=-mabi=lp64d -march=loongarch64 -G0 -DLS2K500 -O0 -fno-builtin -mstrict-align -Wall -Wmissing-prototypes -Wimplicit-function-declaration -Wstrict-prototypes -Wnested-externs
+RTEMS_BSP=ls2k500
+
+Name: loongarch64-rtems4.11-ls2k500
+Version: 4.11.2
+Description: RTEMS BSP ls2k500
+Libs:
+Cflags: -qrtems -B${exec_prefix}/lib/ -B${libdir}/ --specs bsp_specs ${CFLAGS}

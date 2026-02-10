@@ -1,0 +1,169 @@
+OUTPUT_FORMAT("elf64-loongarch", "elf64-loongarch", "elf64-loongarch")
+
+OUTPUT_ARCH("loongarch")
+
+_RamSize = DEFINED(_RamSize) ? _RamSize : 256M;
+_StackSize = DEFINED(_StackSize) ? _StackSize : 0x4000; /* 16k */
+
+ENTRY(_start)
+
+SECTIONS
+{
+    /*
+     * sections, merged into text segment:
+     *
+     * CACHED:   0x9000000000000000
+     * UNCACHED: 0x8000000000000000
+     *
+     * cached address, from 8M
+     */
+    . = 0x9000000000800000;
+    .text :
+    {
+        _ftext = . ;
+        *(.start)
+        *(.text)
+        *(.text.*)
+        *(.rodata)
+        *(.rodata.*)
+        *(.rodata1)
+        *(.rodata1.*)
+
+        /* section information for finsh shell */
+        . = ALIGN(8);
+        __fsymtab_start = .;
+        KEEP(*(FSymTab))
+        __fsymtab_end = .;
+
+        . = ALIGN(8);
+        __vsymtab_start = .;
+        KEEP(*(VSymTab))
+        __vsymtab_end = .;
+ 
+        . = ALIGN(8);
+        __rt_init_start = .;
+        KEEP(*(SORT(.rti_fn*)))
+        __rt_init_end = .;
+ 
+        . = ALIGN(8);
+        __rt_utest_tc_tab_start = .;
+        KEEP(*(UtestTcTab))
+        __rt_utest_tc_tab_end = .;
+
+        /* cherry usb */
+        . = ALIGN(8);
+        __usbh_class_info_start__ = .;
+        KEEP(*(.usbh_class_info))
+        __usbh_class_info_end__ = .;
+        . = ALIGN(8);
+    }
+    
+    .eh_frame_hdr : 
+    { 
+         *(.eh_frame_hdr) 
+         *(.eh_frame_entry)
+    }
+    .eh_frame : ONLY_IF_RO { KEEP (*(.eh_frame)) }
+
+    . = ALIGN(16);
+    .data : 
+    {
+         *(.data)
+         *(.data.*)
+        
+         *(.data1)
+         *(.data1.*)
+
+         . = ALIGN(16);
+         _gp = ABSOLUTE(.);     /* Base of small data */
+         
+         *(.sdata)
+         *(.sdata.*)
+    }
+
+    . = ALIGN(16);
+    .ctors :
+    {
+        PROVIDE(__ctors_start__ = .);
+        KEEP(*(SORT(.ctors.*)))
+        KEEP(*(.ctors))
+        PROVIDE(__ctors_end__ = .);
+    }
+
+    . = ALIGN(16);
+    .dtors :
+    {
+        PROVIDE(__dtors_start__ = .);
+        KEEP(*(SORT(.dtors.*)))
+        KEEP(*(.dtors))
+        PROVIDE(__dtors_end__ = .);
+    }
+
+    . = ALIGN(16);
+    .sbss : 
+    {
+        __bss_start = .;
+        *(.sbss)
+        *(.sbss.*)
+        *(.dynsbss)
+        *(.scommon)
+    }
+
+    . = ALIGN(16);
+    .bss :
+    {
+        *(.bss)
+        *(.bss.*)
+        *(.dynbss)
+        *(COMMON)
+        . = ALIGN(32);
+        __bss_end = .;
+    }
+ 
+    .stack :
+    {
+        . = ALIGN(32);
+        _system_stack_start = .;
+        . += _StackSize;
+        _system_stack     = .;
+    }
+
+    _end = .;
+    PROVIDE(end = .);
+    
+    /* Stabs debugging sections.  */
+    .stab          0 : { *(.stab) }
+    .stabstr       0 : { *(.stabstr) }
+    .stab.excl     0 : { *(.stab.excl) }
+    .stab.exclstr  0 : { *(.stab.exclstr) }
+    .stab.index    0 : { *(.stab.index) }
+    .stab.indexstr 0 : { *(.stab.indexstr) }
+    .comment       0 : { *(.comment) }
+    /* DWARF debug sections.
+     * Symbols in the DWARF debugging sections are relative to the beginning
+     * of the section so we begin them at 0.  */
+    /* DWARF 1 */
+    .debug          0 : { *(.debug) }
+    .line           0 : { *(.line) }
+    /* GNU DWARF 1 extensions */
+    .debug_srcinfo  0 : { *(.debug_srcinfo) }
+    .debug_sfnames  0 : { *(.debug_sfnames) }
+    /* DWARF 1.1 and DWARF 2 */
+    .debug_aranges  0 : { *(.debug_aranges) }
+    .debug_pubnames 0 : { *(.debug_pubnames) }
+    /* DWARF 2 */
+    .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+    .debug_abbrev   0 : { *(.debug_abbrev) }
+    .debug_line     0 : { *(.debug_line) }
+    .debug_frame    0 : { *(.debug_frame) }
+    .debug_str      0 : { *(.debug_str) }
+    .debug_loc      0 : { *(.debug_loc) }
+    .debug_macinfo  0 : { *(.debug_macinfo) }
+    /* SGI/MIPS DWARF 2 extensions */
+    .debug_weaknames 0 : { *(.debug_weaknames) }
+    .debug_funcnames 0 : { *(.debug_funcnames) }
+    .debug_typenames 0 : { *(.debug_typenames) }
+    .debug_varnames  0 : { *(.debug_varnames) }
+}
+
+

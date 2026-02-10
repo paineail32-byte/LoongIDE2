@@ -1,0 +1,140 @@
+/*
+ * Copyright (C) 2021-2024 Suzhou Tiancheng Software Inc. All Rights Reserved.
+ *
+ */
+/*
+ * main.c
+ *
+ * created: 2024-7-18
+ *  author: Bian
+ */
+
+#include <stdio.h>
+
+#include "bsp.h"
+#include "osal.h"
+
+#include "ls2k_gpio.h"
+
+//-----------------------------------------------------------------------------
+// Simple demo of task
+//-----------------------------------------------------------------------------
+
+#define USE_DEMO1   0
+#define USE_DEMO2   0
+
+#if USE_DEMO1
+
+static osal_task_t m_demo1_task = NULL;
+
+static void demo1_task(void *arg)
+{
+	unsigned int tickcount;
+
+    for ( ; ; )
+    {
+        tickcount = get_clock_ticks();
+
+        printk("demo1 tick count = %i\r\n", tickcount);
+
+        osal_task_sleep(1000);
+
+    }
+}
+
+#endif
+
+//-----------------------------------------------------------------------------
+
+#if USE_DEMO2
+
+static osal_task_t m_demo2_task = NULL;
+
+static void demo2_task(void *arg)
+{
+	unsigned int tickcount;
+
+    for ( ; ; )
+    {
+
+        tickcount = get_clock_ticks();
+
+        printk("DEMO2 tick count = %i\r\n", tickcount);
+
+        osal_task_sleep(500);
+    }
+}
+
+#endif // #if USE_DEMO2
+
+//-----------------------------------------------------------------------------
+
+/*
+ * 主程序
+ */
+int main(void)
+{
+    printk("Hello world!\r\n");
+    printk("Welcome to Loongson 2K300!\r\n\r\n");
+
+    #if BSP_USE_CAN0 && BSP_USE_CAN1
+    {
+        int can0_start_transmit(void);
+        int can1_start_receive(void);
+
+        /**
+         * 米联客有 GPIO101 控制 CANFD 收发芯片
+         *
+         * 可在 ls2k_can_init_hook()中实现
+         */
+        gpio_mux(101, PAD_AS_GPIO);
+        gpio_write(101, 0);
+
+        can0_start_transmit();
+        can1_start_receive();
+    }
+    #endif
+
+    #if USE_DEMO1
+    {
+        m_demo1_task = osal_task_create("demotask1",
+                                         8192,
+                                         28,    /* priority */
+                                         10,    /* slice */
+                                         demo1_task,
+                                         NULL );
+        if (m_demo1_task)
+        {
+            printk("create demotask1 successful\r\n");
+        }
+    }
+    #endif
+
+    #if USE_DEMO2
+    {
+        m_demo2_task = osal_task_create("demotask2",
+                                         8192,
+                                         27,    /* priority */
+                                         10,    /* slice */
+                                         demo2_task,
+                                         NULL );
+        if (m_demo2_task)
+        {
+            printk("create demotask2 successful\r\n");
+        }
+    }
+    #endif
+
+    printk("main() is exit!\r\n");
+
+	/*
+	 * Finsh as another thread...
+	 */
+    return 0;
+
+}
+
+//-----------------------------------------------------------------------------
+/*
+ * @@ END
+ */
